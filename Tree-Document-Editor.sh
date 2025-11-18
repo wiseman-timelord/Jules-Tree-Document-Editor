@@ -1,84 +1,101 @@
-#!/bin/bash
-# Script: Tree-Document-Editor.sh
+@echo off
+setlocal enabledelayedexpansion
 
-cd "$(dirname "$0")"
-export PYTHONPATH=$PYTHONPATH:/usr/lib/python3/dist-packages
+:: Change to the scripts directory to ensure proper path resolution
+cd /d "%~dp0"
 
-# Function to display the main menu
-main_menu() {
-    clear
-    echo "==============================================================================="
-    echo "   Tree-Document-Editor: Bash Menu"
-    echo "==============================================================================="
-    echo
-    echo
-    echo
-    echo
-    echo
-    echo
-    echo
-    echo "   1) Launch Tree-Document-Editor"
-    echo
-    echo "   2) Install Requirements"
-    echo
-    echo
-    echo
-    echo
-    echo
-    echo
-    echo
-    echo "-------------------------------------------------------------------------------"
-    read -p "Selection; Menu Options = 1-2, Quit Program = Q: " choice
-}
+set "SCRIPT_DIR=%~dp0"
+:: -----------------------------------------------------------
+::  OFFLINE-PYTHON LOCATIONS (used by both INSTALL and LAUNCH)
+:: -----------------------------------------------------------
+set "PYTHON_DIR=%SCRIPT_DIR%data\installed\Python311"
+set "PYTHON_EXE=%PYTHON_DIR%\python.exe"
 
-# Function to launch the application
-launch() {
-    clear
-    echo "==============================================================================="
-    echo "   Launching Tree-Document-Editor"
-    echo "==============================================================================="
-    echo
-    echo "Starting application..."
-    python3 scripts/editor.py
-    echo
-    read -p "Press Enter to continue..."
-}
+set "GTK_PATH=%SCRIPT_DIR%vendor\gtk-windows\bin"
+set "PYTHONPATH=%SCRIPT_DIR%data\packages\python-3.11-offline-site-packages;%SCRIPT_DIR%vendor\gtk-windows\lib\site-packages"
+set "GI_TYPELIB_PATH=%SCRIPT_DIR%vendor\gtk-windows\lib\girepository-1.0"
+set "PATH=%GTK_PATH%;%PYTHON_DIR%;%PATH%"
 
-# Function to install requirements
-install() {
-    clear
-    echo "==============================================================================="
-    echo "   Installing Requirements"
-    echo "==============================================================================="
-    echo
-    echo "Running Python installer script..."
-    python3 scripts/installer.py linux
-    echo
-    echo "Installation complete."
-    read -p "Press Enter to continue..."
-}
+:MAIN_MENU
+cls
+echo ===============================================================================
+echo    Tree-Document-Editor: Batch Menu
+echo ===============================================================================
+echo.
+echo.
+echo.
+echo.
+echo.
+echo.
+echo.
+echo    1) Launch Tree-Document-Editor
+echo.
+echo    2) Install Requirements
+echo.
+echo.
+echo.
+echo.
+echo.
+echo.
+echo.
+echo.
+echo -------------------------------------------------------------------------------
+set /p choice="Selection; Menu Options = 1-2, Quit Program = Q: "
 
-# Function to quit the program
-quit() {
-    clear
-    echo "==============================================================================="
-    echo "   Exiting Program"
-    echo "==============================================================================="
-    echo
-    echo "Exiting program..."
-    echo "Thank you for using Tree-Document-Editor."
-    echo
-    sleep 2
-    exit 0
-}
+if /i "%choice%"=="1" call :LAUNCH
+if /i "%choice%"=="2" call :INSTALL
+if /i "%choice%"=="Q" call :QUIT
+if /i "%choice%"=="1" goto MAIN_MENU
+if /i "%choice%"=="2" goto MAIN_MENU
+if /i "%choice%"=="Q" exit /b 0
+echo Invalid selection. Please try again.
+pause
+goto MAIN_MENU
 
-# Main loop
-while true; do
-    main_menu
-    case "$choice" in
-        1) launch ;;
-        2) install ;;
-        q|Q) quit ;;
-        *) echo "Invalid selection. Please try again."; read -p "Press Enter to continue..." ;;
-    esac
-done
+:LAUNCH
+cls
+echo ===============================================================================
+echo    Launching Tree-Document-Editor
+echo ===============================================================================
+echo.
+echo Starting application...
+"%PYTHON_EXE%" "%SCRIPT_DIR%scripts\editor.py"
+echo.
+pause
+goto :eof
+
+:INSTALL
+cls
+echo ===============================================================================
+echo    Installing Requirements
+echo ===============================================================================
+echo.
+set "PYTHON_INSTALLER=%SCRIPT_DIR%data\packages\python-3.11.0-amd64.exe"
+if not exist "%PYTHON_EXE%" (
+    echo Installing Python 3.11 offline...
+    if not exist "%PYTHON_INSTALLER%" (
+        echo ERROR: Python installer not found at %PYTHON_INSTALLER%
+        echo Please place the Python installer in the specified directory.
+        exit /b 1
+    )
+    "%PYTHON_INSTALLER%" /quiet InstallAllUsers=0 TargetDir="%PYTHON_DIR%" PrependPath=0 Include_test=0
+)
+echo.
+echo Running Python installer script...
+"%PYTHON_EXE%" "%SCRIPT_DIR%scripts\installer.py" windows
+echo.
+echo Installation complete.
+pause
+goto :eof
+
+:QUIT
+cls
+echo ===============================================================================
+echo    Exiting Program
+echo ===============================================================================
+echo.
+echo Exiting program...
+echo Thank you for using Tree-Document-Editor.
+echo.
+timeout /t 2 /nobreak >nul
+goto :eof

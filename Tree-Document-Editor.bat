@@ -1,14 +1,20 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: Change to the script's directory to ensure proper path resolution
+:: Change to the scripts directory to ensure proper path resolution
 cd /d "%~dp0"
 
 set "SCRIPT_DIR=%~dp0"
-set "GTK_PATH=%SCRIPT_DIR%vendor\\gtk-windows\\bin"
-set "PYTHONPATH=%SCRIPT_DIR%vendor\\gtk-windows\\lib\\site-packages"
-set "GI_TYPELIB_PATH=%SCRIPT_DIR%vendor\\gtk-windows\\lib\\girepository-1.0"
-set "PATH=%GTK_PATH%;%PATH%"
+:: -----------------------------------------------------------
+::  OFFLINE-PYTHON LOCATIONS used by both INSTALL and LAUNCH
+:: -----------------------------------------------------------
+set "PYTHON_DIR=%SCRIPT_DIR%data\installed\Python311"
+set "PYTHON_EXE=%PYTHON_DIR%\python.exe"
+
+set "GTK_PATH=%SCRIPT_DIR%vendor\gtk-windows\bin"
+set "PYTHONPATH=%SCRIPT_DIR%data\packages\python-3.11-offline-site-packages;%SCRIPT_DIR%vendor\gtk-windows\lib\site-packages"
+set "GI_TYPELIB_PATH=%SCRIPT_DIR%vendor\gtk-windows\lib\girepository-1.0"
+set "PATH=%GTK_PATH%;%PYTHON_DIR%;%PATH%"
 
 :MAIN_MENU
 cls
@@ -53,7 +59,7 @@ echo    Launching Tree-Document-Editor
 echo ===============================================================================
 echo.
 echo Starting application...
-python "%SCRIPT_DIR%scripts\\editor.py"
+"%PYTHON_EXE%" "%SCRIPT_DIR%scripts\editor.py"
 echo.
 pause
 goto :eof
@@ -64,24 +70,19 @@ echo ===========================================================================
 echo    Installing Requirements
 echo ===============================================================================
 echo.
-set "PYTHON_INSTALLER_PATH=%SCRIPT_DIR%data\\packages\\python-3.11.0-amd64.exe"
-echo Checking for Python...
-python --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo Python not found, installing...
-    if not exist "%PYTHON_INSTALLER_PATH%" (
-        echo ERROR: Python installer not found at %PYTHON_INSTALLER_PATH%
+set "PYTHON_INSTALLER=%SCRIPT_DIR%data\packages\python-3.11.0-amd64.exe"
+if not exist "%PYTHON_EXE%" (
+    echo Installing Python 3.11 offline...
+    if not exist "%PYTHON_INSTALLER%" (
+        echo ERROR: Python installer not found at %PYTHON_INSTALLER%
         echo Please place the Python installer in the specified directory.
         exit /b 1
     )
-    "%PYTHON_INSTALLER_PATH%" /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
-    echo Python installed successfully.
-) else (
-    echo Python is already installed.
+    "%PYTHON_INSTALLER%" /quiet InstallAllUsers=0 TargetDir="%PYTHON_DIR%" PrependPath=0 Include_test=0
 )
 echo.
 echo Running Python installer script...
-python "%SCRIPT_DIR%scripts\\installer.py" windows
+"%PYTHON_EXE%" "%SCRIPT_DIR%scripts\installer.py" windows
 echo.
 echo Installation complete.
 pause
